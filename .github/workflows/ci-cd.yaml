@@ -13,9 +13,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Use Node.js version
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14.x' # o la versión exacta que necesites
+
       - name: Install dependencies
         run: npm install
 
+      - name: Install PM2
+        run: npm install -g pm2
+
       - name: Restart services with PM2
-        run: /home/xanadu/.nvm/versions/node/v14.21.3/bin/pm2 restart all
+        run: pm2 restart all
 

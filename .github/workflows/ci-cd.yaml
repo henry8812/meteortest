@@ -16,5 +16,5 @@ jobs:
         run: npm install
 
       - name: Run restartService.sh
-        run: sudo -u xanadu /bin/bash /home/xanadu/restartService.sh
+        run: sudo  /bin/bash /home/xanadu/restartService.sh
 

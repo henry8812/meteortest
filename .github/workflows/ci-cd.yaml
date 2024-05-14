@@ -17,7 +17,7 @@ jobs:
         run: npm install
 
       - name: Restart PM2 process
-        run: pm2 restart all
+        run: /home/xanadu/.pm2 restart all
 
       - name: Notify deployment status
         run: echo "Deployment completed successfully!"

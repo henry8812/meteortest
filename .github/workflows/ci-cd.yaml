@@ -1,4 +1,4 @@
-name: Deployment Pipeline
+name: CI/CD Workflow
 
 on:
   push:
@@ -12,18 +12,28 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-
-      - name: Use Node.js version
-        uses: actions/setup-node@v2
         with:
-          node-version: '14.x' # o la versión exacta que necesites
+          repository: henry8812/meteortest
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ssh-strict: true
+          persist-credentials: true
+          clean: true
+          fetch-depth: 1
+          lfs: false
+          submodules: false
+          set-safe-directory: true
+
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '14'
 
       - name: Install dependencies
         run: npm install
 
-      - name: Install PM2
+      - name: Install pm2
         run: npm install -g pm2
 
-      - name: Restart services with PM2
-        run: pm2 restart all
+      - name: Restart server
+        run: ./restartService.sh
 

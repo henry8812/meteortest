@@ -1,4 +1,4 @@
-name: CI/CD Workflow
+name: Deploy to Staging
 
 on:
   push:
@@ -6,21 +6,16 @@ on:
       - main
 
 jobs:
-  deploy_to_staging:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-
-      - name: Install Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '14'
-
+      
       - name: Install dependencies
         run: npm install
 
-      - name: Restart server
+      - name: Restart service
         run: /bin/bash /home/xanadu/meteortest/restartService.sh
 

@@ -15,6 +15,7 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Run restartService.sh as xanadu
-        run: sudo -u xanadu /home/xanadu/meteortest/restartService.sh
+      - name: Run restartService.sh
+        run: /bin/bash /home/xanadu/meteortest/restartService.sh
+        user: xanadu
 

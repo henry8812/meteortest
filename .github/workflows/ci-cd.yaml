@@ -17,5 +17,5 @@ jobs:
         run: npm install
 
       - name: Restart service
-        run: /bin/bash ~/restartService.sh
+        run: /home/xanadu/.nvm/versions/node/v14.21.3/bin/pm2 restart 0
 

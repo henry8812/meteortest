@@ -17,5 +17,4 @@ jobs:
 
       - name: Run restartService.sh
         run: sudo -u xanadu /bin/bash /home/xanadu/restartService.sh
-        user: xanadu
 

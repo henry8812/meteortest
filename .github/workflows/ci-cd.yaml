@@ -12,16 +12,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-        with:
-          repository: henry8812/meteortest
-          token: ${{ secrets.GITHUB_TOKEN }}
-          ssh-strict: true
-          persist-credentials: true
-          clean: true
-          fetch-depth: 1
-          lfs: false
-          submodules: false
-          set-safe-directory: true
 
       - name: Install Node.js
         uses: actions/setup-node@v3
@@ -35,5 +25,5 @@ jobs:
         run: npm install -g pm2
 
       - name: Restart server
-        run: ./restartService.sh
+        run: /home/xanadu/meteortest/restartService.sh
 

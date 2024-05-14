@@ -17,5 +17,5 @@ jobs:
         run: npm install
 
       - name: Restart services with PM2
-        run: ~/.npm-global/bin/pm2 restart all
+        run: /home/xanadu/.nvm/versions/node/v14.21.3/bin/pm2 restart all
 

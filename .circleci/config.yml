@@ -1,8 +1,13 @@
 version: 2.1
+
+executors:
+  my-runner:
+    machine:
+      resource_class: furtherreach/label  # Reemplaza esto con tu clase de recursos de CircleCI
+
 jobs:
   build:
-    docker:
-      - image: circleci/python:3.8
+    executor: my-runner
     steps:
       - checkout
       - run:
@@ -15,13 +20,25 @@ jobs:
           command: |
             echo "Building project"
             # Aquí van tus comandos de construcción y pruebas
+
+  deploy:
+    executor: my-runner
+    steps:
       - run:
-          name: Send Webhook
+          name: Deploy Project
           command: |
-            curl -X POST -H "Content-Type: application/json" -d '{"status":"success"}' http://your-server-endpoint/deploy
+            echo "Deploying project"
+            cd /path/to/your/project
+            git pull
+            npm install
+            npm run build
+            sudo systemctl restart your-service
 
 workflows:
   version: 2
   build_and_deploy:
     jobs:
       - build
+      - deploy:
+          requires:
+            - build

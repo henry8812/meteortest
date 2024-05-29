@@ -9,3 +9,4 @@ jobs:
     resource_class: furtherreach/label
     steps:
       - run: echo "Hi I'm on Runners!"
+      - run: touch /tmp/test

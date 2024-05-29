@@ -1,44 +1,11 @@
 version: 2.1
-
-executors:
-  my-runner:
-    machine:
-      resource_class: furtherreach/label  # Reemplaza esto con tu clase de recursos de CircleCI
-
-jobs:
-  build:
-    executor: my-runner
-    steps:
-      - checkout
-      - run:
-          name: Install Dependencies
-          command: |
-            sudo apt-get update
-            sudo apt-get install -y curl
-      - run:
-          name: Build Project
-          command: |
-            echo "Building project"
-            # Aquí van tus comandos de construcción y pruebas
-
-  deploy:
-    executor: my-runner
-    steps:
-      - run:
-          name: Deploy Project
-          command: |
-            echo "Deploying project"
-            cd /path/to/your/project
-            git pull
-            npm install
-            npm run build
-            sudo systemctl restart your-service
-
 workflows:
-  version: 2
-  build_and_deploy:
+  testing:
     jobs:
-      - build
-      - deploy:
-          requires:
-            - build
+      - runner-test
+jobs:
+  runner-test:
+    machine: true
+    resource_class: furtherreach/label
+    steps:
+      - run: echo "Hi I'm on Runners!"

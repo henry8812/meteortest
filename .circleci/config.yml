@@ -1,25 +1,91 @@
 version: 2.1
 
 jobs:
-  build:
+  pull_code:
     docker:
       - image: circleci/python:3.8
     steps:
-      - checkout
       - add_ssh_keys:
           fingerprints:
             - "SHA256:vx0Myv7knLeUeNwZmStX8qvX48mCoOg6WZlbKRdpvQA"
       - run:
-          name: Crear archivo y escribir fecha
+          name: Git Pull
           command: |
-            ssh -o StrictHostKeyChecking=no henry@staging-controller.furtherreach.net 'echo $(date) > /tmp/prueba.txt'
+            ssh -o StrictHostKeyChecking=no henry@staging-controller.furtherreach.net "
+              cd /home/henry/meteortest-main
+              git pull origin main
+            "
+
+  install_dependencies:
+    docker:
+      - image: circleci/python:3.8
+    steps:
+      - add_ssh_keys:
+          fingerprints:
+            - "SHA256:vx0Myv7knLeUeNwZmStX8qvX48mCoOg6WZlbKRdpvQA"
       - run:
-          name: Comprimir archivo
+          name: Install NPM dependencies
           command: |
-            ssh -o StrictHostKeyChecking=no henry@staging-controller.furtherreach.net 'tar -czvf /tmp/prueba.tar.gz /tmp/prueba.txt'
+            ssh -o StrictHostKeyChecking=no henry@staging-controller.furtherreach.net "
+              cd /home/henry/meteortest-main
+              npm install
+            "
+
+  build_project:
+    docker:
+      - image: circleci/python:3.8
+    steps:
+      - add_ssh_keys:
+          fingerprints:
+            - "SHA256:vx0Myv7knLeUeNwZmStX8qvX48mCoOg6WZlbKRdpvQA"
+      - run:
+          name: Install external dependencies
+          command: |
+            ssh -o StrictHostKeyChecking=no henry@staging-controller.furtherreach.net "
+              cd /home/henry/meteortest-main/external-controller
+              npm install
+            "
+      - run:
+          name: Build Meteor project
+          command: |
+            ssh -o StrictHostKeyChecking=no henry@staging-controller.furtherreach.net "
+              cd /home/henry/meteortest-main/external-controller
+              meteor build --directory /tmp/build
+            "
+
+  # deploy:
+  #   docker:
+  #     - image: circleci/python:3.8
+  #   steps:
+  #     - add_ssh_keys:
+  #         fingerprints:
+  #           - "SHA256:vx0Myv7knLeUeNwZmStX8qvX48mCoOg6WZlbKRdpvQA"
+  #     - run:
+  #         name: Create backup and deploy new build
+  #         command: |
+  #           ssh -o StrictHostKeyChecking=no henry@staging-controller.furtherreach.net "
+  #             sudo su - controller -c '
+  #               cd /home/controller/
+  #               mv buildController buildController_backup_$(date +%Y%m%d%H%M%S)
+  #               mkdir buildController
+  #               tar -xzf /tmp/build/bundle.tar.gz -C buildController
+  #               cd buildController/bundle/programs/server
+  #               npm install
+  #               sudo systemctl restart celerate-controller
+  #             '
+  #           "
 
 workflows:
   version: 2
-  build:
+  deploy_workflow:
     jobs:
-      - build
+      - pull_code
+      - install_dependencies:
+          requires:
+            - pull_code
+      - build_project:
+          requires:
+            - install_dependencies
+      # - deploy:
+      #     requires:
+      #       - build_project

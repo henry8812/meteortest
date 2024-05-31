@@ -16,43 +16,23 @@ jobs:
       - run:
           name: Clonar repositorio y cambiar a usuario controller
           command: |
-            ssh -o StrictHostKeyChecking=no henry@staging-controller.furtherreach.net << 'EOF'
-              sudo su - controller
-              cd /home/henry/meteortest-main
-              git pull origin main
-            EOF
+            ssh -o StrictHostKeyChecking=no henry@staging-controller.furtherreach.net 'sudo su - controller -c "cd /home/henry/meteortest-main && git pull origin main"'
       - run:
           name: Instalar dependencias
           command: |
-            ssh -o StrictHostKeyChecking=no henry@staging-controller.furtherreach.net << 'EOF'
-              sudo su - controller
-              cd /home/henry/meteortest-main
-              npm install
-            EOF
+            ssh -o StrictHostKeyChecking=no henry@staging-controller.furtherreach.net 'sudo su - controller -c "cd /home/henry/meteortest-main && npm install"'
       - run:
           name: Instalar dependencias externas
           command: |
-            ssh -o StrictHostKeyChecking=no henry@staging-controller.furtherreach.net << 'EOF'
-              sudo su - controller
-              cd /home/henry/meteortest-main/external-controller
-              npm install
-            EOF
+            ssh -o StrictHostKeyChecking=no henry@staging-controller.furtherreach.net 'sudo su - controller -c "cd /home/henry/meteortest-main/external-controller && npm install"'
       - run:
           name: Crear build de Meteor
           command: |
-            ssh -o StrictHostKeyChecking=no henry@staging-controller.furtherreach.net << 'EOF'
-              sudo su - controller
-              cd /home/henry/meteortest-main
-              meteor build /tmp --directory
-            EOF
+            ssh -o StrictHostKeyChecking=no henry@staging-controller.furtherreach.net 'sudo su - controller -c "cd /home/henry/meteortest-main && meteor build /tmp --directory"'
       - run:
           name: Copiar build y extraer
           command: |
-            ssh -o StrictHostKeyChecking=no henry@staging-controller.furtherreach.net << 'EOF'
-              sudo su - controller
-              cp /home/controller/buildController /home/controller/buildController_$(date +%Y%m%d_%H%M%S)
-              tar -xzvf /tmp/bundle.tar.gz -C /home/controller/buildController
-            EOF
+            ssh -o StrictHostKeyChecking=no henry@staging-controller.furtherreach.net 'sudo su - controller -c "cp -r /home/controller/buildController /home/controller/buildController_$(date +%Y%m%d_%H%M%S) && tar -xzvf /tmp/bundle.tar.gz -C /home/controller/buildController"'
 
 workflows:
   version: 2

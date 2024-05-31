@@ -6,16 +6,7 @@ executors:
       - image: circleci/python:3.8
 
 jobs:
-  setup:
-    executor: docker-executor
-    steps:
-      - checkout
-      - run:
-          name: Cambiar a usuario controller
-          command: |
-            sudo su - controller
-
-  install_dependencies:
+  build:
     executor: docker-executor
     steps:
       - checkout
@@ -23,51 +14,51 @@ jobs:
           fingerprints:
             - "SHA256:vx0Myv7knLeUeNwZmStX8qvX48mCoOg6WZlbKRdpvQA"
       - run:
+          name: Clonar repositorio y cambiar a usuario controller
+          command: |
+            ssh -o StrictHostKeyChecking=no henry@staging-controller.furtherreach.net << 'EOF'
+              sudo su - controller
+              cd /home/henry/meteortest-main
+              git pull origin main
+            EOF
+      - run:
           name: Instalar dependencias
           command: |
-            sudo su - controller -c 'cd /home/henry/meteortest-main && npm install'
-
-  build:
-    executor: docker-executor
-    steps:
-      - checkout
+            ssh -o StrictHostKeyChecking=no henry@staging-controller.furtherreach.net << 'EOF'
+              sudo su - controller
+              cd /home/henry/meteortest-main
+              npm install
+            EOF
       - run:
           name: Instalar dependencias externas
           command: |
-            sudo su - controller -c 'cd /home/henry/meteortest-main/external-controller && npm install'
+            ssh -o StrictHostKeyChecking=no henry@staging-controller.furtherreach.net << 'EOF'
+              sudo su - controller
+              cd /home/henry/meteortest-main/external-controller
+              npm install
+            EOF
       - run:
           name: Crear build de Meteor
           command: |
-            sudo su - controller -c 'cd /home/henry/meteortest-main && meteor build /tmp --directory'
+            ssh -o StrictHostKeyChecking=no henry@staging-controller.furtherreach.net << 'EOF'
+              sudo su - controller
+              cd /home/henry/meteortest-main
+              meteor build /tmp --directory
+            EOF
       - run:
           name: Copiar build y extraer
           command: |
-            sudo su - controller -c 'cp /home/controller/buildController /home/controller/buildController_$(date +%Y%m%d_%H%M%S) && tar -xzvf /tmp/bundle.tar.gz -C /home/controller/buildController'
-
-  deploy:
-    executor: docker-executor
-    steps:
-      - checkout
-      - run:
-          name: Instalar dependencias en el servidor
-          command: |
-            sudo su - controller -c 'cd /home/controller/buildController/bundle/programs/server && npm install'
-      - run:
-          name: Reiniciar servicio celerate-controller
-          command: |
-            sudo su - controller -c 'sudo systemctl restart celerate-controller'
+            ssh -o StrictHostKeyChecking=no henry@staging-controller.furtherreach.net << 'EOF'
+              sudo su - controller
+              cp /home/controller/buildController /home/controller/buildController_$(date +%Y%m%d_%H%M%S)
+              tar -xzvf /tmp/bundle.tar.gz -C /home/controller/buildController
+            EOF
 
 workflows:
   version: 2
   build_and_deploy:
     jobs:
-      - setup
-      - install_dependencies:
-          requires:
-            - setup
-      - build:
-          requires:
-            - install_dependencies
+      - build
       # - deploy: # Comentar esta línea para pruebas
       #     requires:
       #       - build

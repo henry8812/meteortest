@@ -1,91 +1,73 @@
 version: 2.1
 
-jobs:
-  pull_code:
+executors:
+  docker-executor:
     docker:
       - image: circleci/python:3.8
+
+jobs:
+  setup:
+    executor: docker-executor
     steps:
-      - add_ssh_keys:
-          fingerprints:
-            - "SHA256:vx0Myv7knLeUeNwZmStX8qvX48mCoOg6WZlbKRdpvQA"
+      - checkout
       - run:
-          name: Git Pull
+          name: Cambiar a usuario controller
           command: |
-            ssh -o StrictHostKeyChecking=no henry@staging-controller.furtherreach.net "
-              cd /home/henry/meteortest-main
-              git pull origin main
-            "
+            sudo su - controller
 
   install_dependencies:
-    docker:
-      - image: circleci/python:3.8
+    executor: docker-executor
     steps:
+      - checkout
       - add_ssh_keys:
           fingerprints:
             - "SHA256:vx0Myv7knLeUeNwZmStX8qvX48mCoOg6WZlbKRdpvQA"
       - run:
-          name: Install NPM dependencies
+          name: Instalar dependencias
           command: |
-            ssh -o StrictHostKeyChecking=no henry@staging-controller.furtherreach.net "
-              cd /home/henry/meteortest-main
-              npm install
-            "
+            sudo su - controller -c 'cd /home/henry/meteortest-main && npm install'
 
-  build_project:
-    docker:
-      - image: circleci/python:3.8
+  build:
+    executor: docker-executor
     steps:
-      - add_ssh_keys:
-          fingerprints:
-            - "SHA256:vx0Myv7knLeUeNwZmStX8qvX48mCoOg6WZlbKRdpvQA"
+      - checkout
       - run:
-          name: Install external dependencies
+          name: Instalar dependencias externas
           command: |
-            ssh -o StrictHostKeyChecking=no henry@staging-controller.furtherreach.net "
-              cd /home/henry/meteortest-main/external-controller
-              npm install
-            "
+            sudo su - controller -c 'cd /home/henry/meteortest-main/external-controller && npm install'
       - run:
-          name: Build Meteor project
+          name: Crear build de Meteor
           command: |
-            ssh -o StrictHostKeyChecking=no henry@staging-controller.furtherreach.net "
-              cd /home/henry/meteortest-main/external-controller
-              meteor build --directory /tmp/build
-            "
+            sudo su - controller -c 'cd /home/henry/meteortest-main && meteor build /tmp --directory'
+      - run:
+          name: Copiar build y extraer
+          command: |
+            sudo su - controller -c 'cp /home/controller/buildController /home/controller/buildController_$(date +%Y%m%d_%H%M%S) && tar -xzvf /tmp/bundle.tar.gz -C /home/controller/buildController'
 
-  # deploy:
-  #   docker:
-  #     - image: circleci/python:3.8
-  #   steps:
-  #     - add_ssh_keys:
-  #         fingerprints:
-  #           - "SHA256:vx0Myv7knLeUeNwZmStX8qvX48mCoOg6WZlbKRdpvQA"
-  #     - run:
-  #         name: Create backup and deploy new build
-  #         command: |
-  #           ssh -o StrictHostKeyChecking=no henry@staging-controller.furtherreach.net "
-  #             sudo su - controller -c '
-  #               cd /home/controller/
-  #               mv buildController buildController_backup_$(date +%Y%m%d%H%M%S)
-  #               mkdir buildController
-  #               tar -xzf /tmp/build/bundle.tar.gz -C buildController
-  #               cd buildController/bundle/programs/server
-  #               npm install
-  #               sudo systemctl restart celerate-controller
-  #             '
-  #           "
+  deploy:
+    executor: docker-executor
+    steps:
+      - checkout
+      - run:
+          name: Instalar dependencias en el servidor
+          command: |
+            sudo su - controller -c 'cd /home/controller/buildController/bundle/programs/server && npm install'
+      - run:
+          name: Reiniciar servicio celerate-controller
+          command: |
+            sudo su - controller -c 'sudo systemctl restart celerate-controller'
 
 workflows:
   version: 2
-  deploy_workflow:
+  build_and_deploy:
     jobs:
-      - pull_code
+      - setup
       - install_dependencies:
           requires:
-            - pull_code
-      - build_project:
+            - setup
+      - build:
           requires:
             - install_dependencies
-      # - deploy:
+      # - deploy: # Comentar esta línea para pruebas
       #     requires:
-      #       - build_project
+      #       - build

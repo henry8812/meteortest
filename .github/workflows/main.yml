@@ -13,14 +13,15 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Set up SSH
-      uses: webfactory/ssh-agent@v0.5.3
-      with:
-        ssh-private-key: ${{ secrets.LOCAL_SSH_KEY }}
+    
     - name: Debug Secret
       run: |
           echo "Length of SSH key: ${#LOCAL_SSH_KEY}"
           echo "Masked SSH key: ${LOCAL_SSH_KEY:0:5}*****${LOCAL_SSH_KEY: -5}"
+    - name: Set up SSH
+      uses: webfactory/ssh-agent@v0.5.3
+      with:
+        ssh-private-key: ${{ secrets.LOCAL_SSH_KEY }}
 
     - name: Copy code to server
       run: |

@@ -3,56 +3,25 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
+      - main
       - develop
+      - pre-prod
+      - prod
 
 jobs:
-  build:
+  write_branch_and_date:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-    
-    - name: Debug Secret
-      run: |
-          echo "Length of SSH key: ${#LOCAL_SSH_KEY}"
-          echo "Masked SSH key: ${LOCAL_SSH_KEY:0:5}*****${LOCAL_SSH_KEY: -5}"
-    - name: Set up SSH
-      uses: webfactory/ssh-agent@v0.5.3
-      with:
-        ssh-private-key: ${{ secrets.LOCAL_SSH_KEY }}
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -p 22 staging-controller.furtherreach.net >> ~/.ssh/known_hosts
 
-    - name: Copy code to server
-      run: |
-        ssh -o StrictHostKeyChecking=no henry@staging-controller.furtherreach.net << 'EOF'
-          sudo su - controller
-
-          mkdir -p /home/controller/CICD
-          sudo chown -R controller:controller /home/controller/CICD
-        EOF
-        scp -o StrictHostKeyChecking=no -r $GITHUB_WORKSPACE/* henry@staging-controller.furtherreach.net:/home/controller/CICD
-
-    - name: Install dependencies and build
-      run: |
-        ssh -o StrictHostKeyChecking=no henry@staging-controller.furtherreach.net << 'EOF'
-          sudo su - controller
-          cd /home/controller/CICD
-          cd external-controller
-          npm install
-          meteor build ../
-        EOF
-#
-#    - name: Deployment steps
-#      run: |
-#        ssh -o StrictHostKeyChecking=no henry@staging-controller.furtherreach.net << 'EOF'
-#          sudo su - controller
-#          mv /home/controller/controllerBundle/external-controller.tar.gz /home/controller/controllerBundle/external-controller.tar.gz.old
-#          mv /home/controller/controllerBundle/bundle /home/controller/controllerBundle/bundle.old
-#          cp /home/controller/CICD/external-controller.tar.gz /home/controller/controllerBundle/
-#          cd /home/controller/controllerBundle
-#          tar -xzvf external-controller.tar.gz
-#          cd bundle/programs/server
-#          npm install
-#         sudo systemctl start celerate-controller
-#        EOF
+      - name: Write branch and date to file on staging server
+        run: |
+          ssh -p 22 henry@staging-controller.furtherreach.net "echo '${{ github.ref }} - $(date)' >> /tmp/midate"

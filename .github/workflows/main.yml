@@ -18,9 +18,10 @@ jobs:
       - name: List Environment Secrets
         run: |
           echo "Listing environment secrets..."
-          echo ${{ toJSON(secrets) }}
+          echo "GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}"
+          # Agrega más secretos si es necesario
 
       - name: List Environment Variables
         run: |
           echo "Listing environment variables..."
-          env
+          printenv

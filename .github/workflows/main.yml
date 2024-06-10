@@ -1,12 +1,15 @@
-name: Test SSH Connection and Create Date File
+name: CI/CD Pipeline
 
 on:
   push:
     branches:
       - main
+      - develop
+      - pre-prod
+      - prod
 
 jobs:
-  test-ssh-connection:
+  write_branch_and_date:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -19,6 +22,6 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -p 22 staging-controller.furtherreach.net >> ~/.ssh/known_hosts
 
-      - name: Test SSH connection and create date file
+      - name: Write branch and date to file on staging server
         run: |
-          ssh -p 22 henry@staging-controller.furtherreach.net "echo $(date) > /tmp/midate"
+          ssh -p 22 henry@staging-controller.furtherreach.net "echo '${{ github.ref }} - $(date)' >> /tmp/midate"

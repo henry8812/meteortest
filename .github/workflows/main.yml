@@ -1,27 +1,23 @@
-name: List Secrets and Environment Variables
+name: Print Secrets and Variables
 
 on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
 
 jobs:
-  list_secrets_and_env:
+  list-secrets:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out the repository
+      - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: List Environment Secrets
+      - name: List environment secrets
         run: |
           echo "Listing environment secrets..."
-          echo "GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}"
-          # Agrega más secretos si es necesario
+          echo "${{ toJSON(secrets) }}"
 
-      - name: List Environment Variables
+      - name: List environment variables
         run: |
           echo "Listing environment variables..."
-          printenv
+          env

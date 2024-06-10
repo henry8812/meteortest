@@ -1,4 +1,4 @@
-name: Print Specific Secrets and Variables
+name: List secrets and variables
 
 on:
   push:
@@ -6,16 +6,16 @@ on:
       - main
 
 jobs:
-  list-specific-secrets-and-variables:
+  list-secrets-and-variables:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Print LOCAL_SSH_KEY (Will not print value, only asterisks)
-        run: |
-          echo "LOCAL_SSH_KEY: ${{ secrets.LOCAL_SSH_KEY }}"
+      - name: Print LOCAL_SSH_KEY secret (Will not print value, only asterisks)
+        run: echo "LOCAL_SSH_KEY: ${{ secrets.LOCAL_SSH_KEY }}"
 
       - name: Print LOCAL environment variable
-        run: |
-          echo "LOCAL: ${{ env.LOCAL }}"
+        run: echo "LOCAL: $LOCAL"
+        env:
+          LOCAL: ${{ env.LOCAL }}

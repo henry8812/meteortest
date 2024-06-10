@@ -22,3 +22,12 @@ jobs:
           LOCAL: ${{ secrets.LOCAL }}
         run: |
           echo "LOCAL: $LOCAL"
+
+      - name: Ensure secrets and env variables are accessible
+        env:
+          LOCAL_SSH_KEY: ${{ secrets.LOCAL_SSH_KEY }}
+          LOCAL: ${{ secrets.LOCAL }}
+        run: |
+          echo "Ensuring secrets and env variables are accessible"
+          echo "LOCAL_SSH_KEY: $LOCAL_SSH_KEY"
+          echo "LOCAL: $LOCAL"

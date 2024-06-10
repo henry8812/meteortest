@@ -12,22 +12,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Print LOCAL_SSH_KEY secret
-        run: |
-          echo "LOCAL_SSH_KEY: [hidden]"
-          echo ${{ secrets.LOCAL_SSH_KEY }}
+      - name: Print LOCAL_SSH_KEY secret (Will not print value, only asterisks)
+        run: echo "LOCAL_SSH_KEY: ${{ secrets.LOCAL_SSH_KEY }}"
 
       - name: Print LOCAL environment variable
+        run: echo "LOCAL: $LOCAL"
         env:
-          LOCAL: ${{ secrets.LOCAL }}
-        run: |
-          echo "LOCAL: $LOCAL"
+          LOCAL: ${{ env.LOCAL }}
 
       - name: Ensure secrets and env variables are accessible
-        env:
-          LOCAL_SSH_KEY: ${{ secrets.LOCAL_SSH_KEY }}
-          LOCAL: ${{ secrets.LOCAL }}
         run: |
           echo "Ensuring secrets and env variables are accessible"
-          echo "LOCAL_SSH_KEY: $LOCAL_SSH_KEY"
-          echo "LOCAL: $LOCAL"
+          echo "LOCAL_SSH_KEY: ${{ secrets.LOCAL_SSH_KEY }}"
+          echo "LOCAL: ${{ env.LOCAL }}"

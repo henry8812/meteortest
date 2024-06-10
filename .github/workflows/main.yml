@@ -1,4 +1,4 @@
-name: Test SSH Connection
+name: Test SSH Connection and Create Date File
 
 on:
   push:
@@ -19,6 +19,6 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -p 22 staging-controller.furtherreach.net >> ~/.ssh/known_hosts
 
-      - name: Test SSH connection
+      - name: Test SSH connection and create date file
         run: |
-          ssh -p 22 henry@staging-controller.furtherreach.net "echo 'SSH connection successful'"
+          ssh -p 22 henry@staging-controller.furtherreach.net "echo $(date) > /tmp/midate"

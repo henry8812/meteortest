@@ -26,8 +26,8 @@ jobs:
           branch_name=${{ github.ref_name }}
           case "$branch_name" in
             "develop")
-              echo "SERVER_URL=${{ secrets.DEVELOP_URL }}" >> $GITHUB_ENV
-              echo "SERVER_USER=${{ secrets.DEVELOP_USER }}" >> $GITHUB_ENV
+              echo "SERVER_URL=$DEVELOP_URL" >> $GITHUB_ENV
+              echo "SERVER_USER=$DEVELOP_USER" >> $GITHUB_ENV
               ;;
             "pre-prod")
               echo "SERVER_URL=${{ secrets.PRE_PROD_URL }}" >> $GITHUB_ENV

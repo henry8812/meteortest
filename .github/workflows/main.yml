@@ -14,80 +14,87 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Set up environment variables
+      - name: Set up SSH key
         run: |
-          echo "URL=\${{ secrets.${{ github.ref_name }}_URL }}" >> $GITHUB_ENV
-          echo "USER=\${{ secrets.${{ github.ref_name }}_USER }}" >> $GITHUB_ENV
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -p 22 staging-controller.furtherreach.net >> ~/.ssh/known_hosts
+
+      - name: Set environment variables based on branch
+        run: |
+          echo "URL=${{ github.event.ref == 'refs/heads/develop' && 'https://develop.url' || github.event.ref == 'refs/heads/pre-prod' && 'https://pre-prod.url' || github.event.ref == 'refs/heads/prod' && 'https://prod.url' }}" >> $GITHUB_ENV
+          echo "USER=${{ github.event.ref == 'refs/heads/develop' && 'develop_user' || github.event.ref == 'refs/heads/pre-prod' && 'pre_prod_user' || github.event.ref == 'refs/heads/prod' && 'prod_user' }}" >> $GITHUB_ENV
 
       - name: Create timestamp file on server
         run: |
-          ssh -o StrictHostKeyChecking=no $USER@$URL "echo '${{ github.ref_name }} - $USER@$URL - $(date)' > /tmp/timestamp.txt"
+          ssh -p 22 $USER@$URL "echo '${{ github.ref_name }} - $USER@$URL - $(date)' > /tmp/timestamp.txt"
 
-  # Commented jobs
-  #checkout_and_archive:
-  #  runs-on: ubuntu-latest
-  #  needs: determine_server
-  #  steps:
-  #    - name: Checkout repository
-  #      uses: actions/checkout@v2
+  # Commented jobs for future use
+  # checkout_and_archive:
+  #   runs-on: ubuntu-latest
+  #   needs: determine_server
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v2
   #
-  #    - name: Install Meteor
-  #      run: |
-  #        curl https://install.meteor.com/ | sh
+  #     - name: Install Meteor
+  #       run: |
+  #         curl https://install.meteor.com/ | sh
   #
-  #    - name: Install dependencies
-  #      run: |
-  #        cd external-controller
-  #        npm install
+  #     - name: Install dependencies
+  #       run: |
+  #         cd external-controller
+  #         npm install
   #
-  #    - name: Build project
-  #      run: |
-  #        cd external-controller
-  #        meteor build --directory /tmp/build --server-only --allow-superuser
+  #     - name: Build project
+  #       run: |
+  #         cd external-controller
+  #         meteor build --directory /tmp/build --server-only --allow-superuser
   #
-  #    - name: Archive and transfer build to server
-  #      run: |
-  #        tar -czf - -C /tmp build | ssh -o StrictHostKeyChecking=no $USER@$URL 'cat > /tmp/build.tar.gz'
+  #     - name: Archive and transfer build to server
+  #       run: |
+  #         tar -czf - -C /tmp build | ssh -o StrictHostKeyChecking=no $USER@$URL 'cat > /tmp/build.tar.gz'
   #
-  #extract_and_set_permissions:
-  #  runs-on: ubuntu-latest
-  #  needs: checkout_and_archive
-  #  steps:
-  #    - name: Extract build on server and set permissions
-  #      run: |
-  #        ssh -o StrictHostKeyChecking=no $USER@$URL "
-  #          sudo su - controller -c 'rm -rf /home/controller/CICD || true'
-  #          sudo su - controller -c 'mkdir -p /home/controller/CICD'
-  #          sudo su - controller -c 'tar -xzvf /tmp/build.tar.gz -C /home/controller/CICD'
-  #          sudo su - controller -c 'sudo chown -R controller:controller /home/controller/CICD'
-  #        "
+  # extract_and_set_permissions:
+  #   runs-on: ubuntu-latest
+  #   needs: checkout_and_archive
+  #   steps:
+  #     - name: Extract build on server and set permissions
+  #       run: |
+  #         ssh -o StrictHostKeyChecking=no $USER@$URL "
+  #           sudo su - controller -c 'rm -rf /home/controller/CICD || true'
+  #           sudo su - controller -c 'mkdir -p /home/controller/CICD'
+  #           sudo su - controller -c 'tar -xzvf /tmp/build.tar.gz -C /home/controller/CICD'
+  #           sudo su - controller -c 'sudo chown -R controller:controller /home/controller/CICD'
+  #         "
   #
-  #cleanup:
-  #  runs-on: ubuntu-latest
-  #  needs: extract_and_set_permissions
-  #  steps:
-  #    - name: Cleanup local and server temporary files
-  #      run: |
-  #        rm -rf /tmp/build
-  #        ssh -o StrictHostKeyChecking=no $USER@$URL "
-  #          sudo rm -rf /tmp/build.tar.gz
-  #        "
+  # cleanup:
+  #   runs-on: ubuntu-latest
+  #   needs: extract_and_set_permissions
+  #   steps:
+  #     - name: Cleanup local and server temporary files
+  #       run: |
+  #         rm -rf /tmp/build
+  #         ssh -o StrictHostKeyChecking=no $USER@$URL "
+  #           sudo rm -rf /tmp/build.tar.gz
+  #         "
   #
-  #backup_and_deploy:
-  #  runs-on: ubuntu-latest
-  #  needs: cleanup
-  #  steps:
-  #    - name: Backup current implementation and deploy new build
-  #      run: |
-  #        ssh -o StrictHostKeyChecking=no $USER@$URL "
-  #          sudo su - controller
-  #          mv /home/controller/controllerBundle/external-controller.tar.gz /home/controller/controllerBundle/external-controller.tar.gz.$(date +%Y%m%d_%H%M%S)
-  #          mv /home/controller/controllerBundle/bundleOld /home/controller/controllerBundle/bundleOld.$(date +%Y%m%d_%H%M%S)
-  #          mv /home/controller/controllerBundle/bundle /home/controller/controllerBundle/bundleOld
-  #          mkdir -p /home/controller/controllerBundle/bundle
-  #          cp -r /home/controller/CICD/build/bundle/* /home/controller/controllerBundle/bundle
-  #          npm install /home/controller/controllerBundle/bundle/programs/server
-  #          sudo chown -R controller:controller /home/controller/controllerBundle
-  #          sudo systemctl stop celerate-controller
-  #          sudo systemctl start celerate-controller
-  #        "
+  # backup_and_deploy:
+  #   runs-on: ubuntu-latest
+  #   needs: cleanup
+  #   steps:
+  #     - name: Backup current implementation and deploy new build
+  #       run: |
+  #         ssh -o StrictHostKeyChecking=no $USER@$URL "
+  #           sudo su - controller
+  #           mv /home/controller/controllerBundle/external-controller.tar.gz /home/controller/controllerBundle/external-controller.tar.gz.$(date +%Y%m%d_%H%M%S)
+  #           mv /home/controller/controllerBundle/bundleOld /home/controller/controllerBundle/bundleOld.$(date +%Y%m%d_%H%M%S)
+  #           mv /home/controller/controllerBundle/bundle /home/controller/controllerBundle/bundleOld
+  #           mkdir -p /home/controller/controllerBundle/bundle
+  #           cp -r /home/controller/CICD/build/bundle/* /home/controller/controllerBundle/bundle
+  #           npm install /home/controller/controllerBundle/bundle/programs/server
+  #           sudo chown -R controller:controller /home/controller/controllerBundle
+  #           sudo systemctl stop celerate-controller
+  #           sudo systemctl start celerate-controller
+  #         "

@@ -26,8 +26,8 @@ jobs:
           branch_name=${{ github.ref_name }}
           case "$branch_name" in
             "develop")
-              echo "SERVER_URL=${{ env.DEVELOP_URL }}" >> $GITHUB_ENV
-              echo "SERVER_USER=${{ env.DEVELOP_USER }}" >> $GITHUB_ENV
+              echo "SERVER_URL=${{ secrets.DEVELOP_URL }}" >> $GITHUB_ENV
+              echo "SERVER_USER=${{ secrets.DEVELOP_USER }}" >> $GITHUB_ENV
               ;;
             "pre-prod")
               echo "SERVER_URL=${{ secrets.PRE_PROD_URL }}" >> $GITHUB_ENV
@@ -45,7 +45,7 @@ jobs:
 
       - name: Create timestamp file on server
         run: |
-          ssh -p 22 ${{ env.DEVELOP_USER }}@${{ env.DEVELOP_URL }} "echo '${{ github.ref_name }} - $DEVELOP_USER@$DEVELOP_URL - $(date)' > /tmp/timestamp.txt"
+          ssh -p 22 ${{ env.SERVER_USER }}@${{ env.SERVER_URL }} "echo '${{ github.ref_name }} - $DEVELOP_USER@$DEVELOP_URL - $(date)' > /tmp/timestamp.txt"
 
   # Commented jobs for future use
   # checkout_and_archive:

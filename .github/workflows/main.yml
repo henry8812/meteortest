@@ -52,7 +52,6 @@ jobs:
 
       - name: Build project
         run: |
-          cd external-controller
           meteor build --directory /tmp/build --server-only --allow-superuser
 
       - name: Archive and transfer build to server

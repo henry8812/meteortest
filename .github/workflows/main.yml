@@ -23,12 +23,29 @@ jobs:
 
       - name: Set environment variables based on branch
         run: |
-          echo "URL=${{ github.event.ref == 'refs/heads/develop' && 'https://develop.url' || github.event.ref == 'refs/heads/pre-prod' && 'https://pre-prod.url' || github.event.ref == 'refs/heads/prod' && 'https://prod.url' }}" >> $GITHUB_ENV
-          echo "USER=${{ github.event.ref == 'refs/heads/develop' && 'develop_user' || github.event.ref == 'refs/heads/pre-prod' && 'pre_prod_user' || github.event.ref == 'refs/heads/prod' && 'prod_user' }}" >> $GITHUB_ENV
+          branch_name=${{ github.ref_name }}
+          case "$branch_name" in
+            "develop")
+              echo "SERVER_URL=${{ secrets.DEVELOP_URL }}" >> $GITHUB_ENV
+              echo "SERVER_USER=${{ secrets.DEVELOP_USER }}" >> $GITHUB_ENV
+              ;;
+            "pre-prod")
+              echo "SERVER_URL=${{ secrets.PRE_PROD_URL }}" >> $GITHUB_ENV
+              echo "SERVER_USER=${{ secrets.PRE_PROD_USER }}" >> $GITHUB_ENV
+              ;;
+            "prod")
+              echo "SERVER_URL=${{ secrets.PROD_URL }}" >> $GITHUB_ENV
+              echo "SERVER_USER=${{ secrets.PROD_USER }}" >> $GITHUB_ENV
+              ;;
+            *)
+              echo "Unknown branch: $branch_name"
+              exit 1
+              ;;
+          esac
 
       - name: Create timestamp file on server
         run: |
-          ssh -p 22 $USER@$URL "echo '${{ github.ref_name }} - $USER@$URL - $(date)' > /tmp/timestamp.txt"
+          ssh -p 22 ${{ env.SERVER_USER }}@${{ env.SERVER_URL }} "echo '${{ github.ref_name }} - ${{ env.SERVER_USER }}@${{ env.SERVER_URL }} - $(date)' > /tmp/timestamp.txt"
 
   # Commented jobs for future use
   # checkout_and_archive:
@@ -54,7 +71,7 @@ jobs:
   #
   #     - name: Archive and transfer build to server
   #       run: |
-  #         tar -czf - -C /tmp build | ssh -o StrictHostKeyChecking=no $USER@$URL 'cat > /tmp/build.tar.gz'
+  #         tar -czf - -C /tmp build | ssh -o StrictHostKeyChecking=no ${{ env.SERVER_USER }}@${{ env.SERVER_URL }} 'cat > /tmp/build.tar.gz'
   #
   # extract_and_set_permissions:
   #   runs-on: ubuntu-latest
@@ -62,7 +79,7 @@ jobs:
   #   steps:
   #     - name: Extract build on server and set permissions
   #       run: |
-  #         ssh -o StrictHostKeyChecking=no $USER@$URL "
+  #         ssh -o StrictHostKeyChecking=no ${{ env.SERVER_USER }}@${{ env.SERVER_URL }} "
   #           sudo su - controller -c 'rm -rf /home/controller/CICD || true'
   #           sudo su - controller -c 'mkdir -p /home/controller/CICD'
   #           sudo su - controller -c 'tar -xzvf /tmp/build.tar.gz -C /home/controller/CICD'
@@ -76,7 +93,7 @@ jobs:
   #     - name: Cleanup local and server temporary files
   #       run: |
   #         rm -rf /tmp/build
-  #         ssh -o StrictHostKeyChecking=no $USER@$URL "
+  #         ssh -o StrictHostKeyChecking=no ${{ env.SERVER_USER }}@${{ env.SERVER_URL }} "
   #           sudo rm -rf /tmp/build.tar.gz
   #         "
   #
@@ -86,7 +103,7 @@ jobs:
   #   steps:
   #     - name: Backup current implementation and deploy new build
   #       run: |
-  #         ssh -o StrictHostKeyChecking=no $USER@$URL "
+  #         ssh -o StrictHostKeyChecking=no ${{ env.SERVER_USER }}@${{ env.SERVER_URL }} "
   #           sudo su - controller
   #           mv /home/controller/controllerBundle/external-controller.tar.gz /home/controller/controllerBundle/external-controller.tar.gz.$(date +%Y%m%d_%H%M%S)
   #           mv /home/controller/controllerBundle/bundleOld /home/controller/controllerBundle/bundleOld.$(date +%Y%m%d_%H%M%S)

@@ -45,7 +45,7 @@ jobs:
 
       - name: Create timestamp file on server
         run: |
-          ssh -p 22 ${{ env.SERVER_USER }}@${{ env.SERVER_URL }} "echo '${{ github.ref_name }} - $DEVELOP_USER@$DEVELOP_URL - $(date)' > /tmp/timestamp.txt"
+          ssh -p 22 ${{ env.SERVER_USER }}@${{ env.SERVER_URL }} "echo '${{ github.ref_name }} -${{ env.SERVER_USER }}@${{ env.SERVER_URL }} - $(date)' > /tmp/timestamp.txt"
 
   # Commented jobs for future use
   # checkout_and_archive:
